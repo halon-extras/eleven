@@ -1,0 +1,75 @@
+function expurgate($fp, $opts = [])
+{
+	$address = $opts["address"] ?? "127.0.0.1";
+	$port = $opts["port"] ?? 783;
+	$timeout = $opts["timeout"] ?? 30;
+
+	$senderip = $opts["senderip"] ?? none;
+	$sender = $opts["sender"] ?? none;
+	$recipients = $opts["recipients"] ?? [];
+	$sizelimit = $opts["size_limit"] ?? 500 * 1024;
+
+	$s = $fp->seek(0, "SEEK_END");
+	$fp->seek(0, "SEEK_SET");
+	if ($s > $sizelimit) return ["error" => "Content too large"];
+
+	$conn = $socket = Socket(Socket::AF($address), "SOCK_STREAM");
+	if (!$socket->settimeout($timeout)) return ["error" => "Could not set timeout"];
+	if (!$socket->connect($address, $port)) return ["error" => "Could not connect"];
+
+	$str = "REPORT SPAMC/1.3\r\n";
+	if ($senderip)
+		$str .= "Sender-IP: ".$senderip."\r\n";
+	if ($sender)
+		$str .= "Sender: ".$sender."\r\n";
+	foreach ($recipients as $recipient)
+		$str .= "User: ".$recipient["recipient"]."\r\n";
+	$str .= "Content-length: $s\r\n";
+	$str .= "\r\n";
+	if (!$socket->send($str)) return ["error" => "Could not send request"];
+	$fp->seek(0, "SEEK_SET");
+	while ($str = $fp->read(8192))
+		if (!$socket->send($str))
+			return ["error" => "Could not send content"];
+
+	$result = "";
+	while ($resp = $socket->recv(8192))
+		$result .= $resp;
+
+	$conn->shutdown("SHUT_RDWR");
+	$conn->close();
+
+	if (!$result) return ["error" => "No scan result"];
+	if (!pcre_match("EX_OK", $result)) return ["error" => "Bad scan result"];
+
+	$response = [];
+	$rows = str_split($result, "\r\n");
+	if ($rows[0] == "SPAMD/1.3 0 EX_OK")
+	{
+		$header_spam = #/^Spam: (.*) ; (.*) \/ (.*)$/;
+		$header_purgate_type = #/^X-purgate-type: (.+)$/;
+		$header_purgate_id = #/^X-purgate-ID: (.+)$/;
+		foreach ($rows as $row)
+		{
+			if ($data = pcre_match($header_spam, $row))
+			{
+				$response["spam"] = $data[1] == "True" ? true : false;
+				$response["score"] = number($data[2]);
+				$response["threshold"] = number($data[3]);
+			}
+			if ($data = pcre_match($header_purgate_type, $row))
+			{
+				$response["category"] = $data[1];
+			}
+			if ($data = pcre_match($header_purgate_id, $row))
+			{
+				$response["id"] = $data[1];
+			}
+		}
+	} else
+	{
+		return ["error" => "read failed: " + $rows[0]];
+	}
+
+	return $response;
+}
