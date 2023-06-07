@@ -4,6 +4,7 @@ function expurgate($fp, $opts = [])
 	$port = $opts["port"] ?? 783;
 	$timeout = $opts["timeout"] ?? 30;
 
+	$id = $opts["id"] ?? none;
 	$senderip = $opts["senderip"] ?? none;
 	$sender = $opts["sender"] ?? none;
 	$recipients = $opts["recipients"] ?? [];
@@ -18,6 +19,8 @@ function expurgate($fp, $opts = [])
 	if (!$socket->connect($address, $port)) return ["error" => "Could not connect"];
 
 	$str = "REPORT SPAMC/1.3\r\n";
+	if ($id)
+		$str .= "Custom-Connection-ID: ".$id."\r\n";
 	if ($senderip)
 		$str .= "Sender-IP: ".$senderip."\r\n";
 	if ($sender)
