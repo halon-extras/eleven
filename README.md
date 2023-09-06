@@ -51,3 +51,20 @@ An associative array with the following properties set.
 * `id` (string) representing a unique ID
 
 If an error occures an `error` property (string) is set contaning the error message.
+
+## Example
+
+```
+import { expurgate } from "extras://eleven";
+$expurgate = expurgate($mail->toFile(), [
+    "port" => 783,
+    "senderip" => $connection["remoteip"],
+    "sender" => $transaction["sender"],
+    "recipients" => $transaction["recipients"],
+    "id" => $transaction["id"]
+  ]);
+if ($expurgate["spam"])
+{
+  // handle as spam
+}
+```
