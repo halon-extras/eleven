@@ -34,6 +34,7 @@ The following options are available in the **options** array.
 - address `string` - Address of the eXpurgate Spamd server. The default is `127.0.0.1`.
 - port `number` - TCP port. The default is `783`.
 - id `string` - The ID to be logged with the message (see Custom-Connection-ID)
+- expurgateid `string` - The Expurgate ID from a previous scan to indicate a rescan (doesn't increment counters, see X-Purgate-ID)
 - senderip `string` - The sender IP.
 - sender `string` - The envelope sender.
 - recipients `array` - The envelope recipients in [this](https://docs.halon.io/hsl/eodonce.html#recipient) format.
