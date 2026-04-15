@@ -1,0 +1,16 @@
+import $mail from "test.eml";
+import { expurgate } from "file://main.hsl";
+
+// Test 1
+$expect = false;
+$expurgate = expurgate($mail->toFile(), [
+    "port" => 783,
+    "senderip" => "127.0.0.1",
+    "sender" => "sender@example.org",
+    "recipients" => [["recipient" => "recipient@example.com"]],
+    "id" => uuid()
+  ]);
+$result = $expurgate["spam"];
+if ($expect !== $result)
+    throw Exception("Test 1: FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 1:\tOK";
