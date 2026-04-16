@@ -1,16 +1,21 @@
 scripting:
   files:
-  - data: "MIME-Version: 1.0\r\nMessage-ID: <b604dde3-12fb-11f1-b164-2bf370ae4941@se1-gles-sth1.inumbo.com>\r\
-      \nDate: Thu, 26 Feb 2026 11:12:52 +0100\r\nFrom: <sender@example.org>\r\nTo:\
+  - data: "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n\td=example.org;\
+      \ s=myselector;\r\n\th=content-type:subject:to:from:date:message-id:mime-version:from;\r\
+      \n\tbh=+HZoE3D12D+mvnGBXDiZ6hYbJ+3/RYOG2a3c++ZlspU=;\r\n\tb=AMT8SikAtWLDOuN4ppaxTtdj+KlRQ7ElfkS7z9dQ43I/VoMKLIGOkWGI/1QvfIe0wDOKr6GZScP62\r\
+      \n\t 1y6EtLf2skbOPAg5O03bw/P0IdGoF7FC03+StRQwd5ESPkbL3TlZyDI5h9Acm1aEBVgJe2qAzR+gzs\r\
+      \n\t lJ3SVK9QJ+yg7ofU=\r\nMIME-Version: 1.0\r\nMessage-ID: <23f15f52-395e-11f1-8c7a-99705fedb418@se1-gles-flk1.inumbo.com>\r\
+      \nDate: Thu, 16 Apr 2026 08:33:11 +0200\r\nFrom: <sender@example.org>\r\nTo:\
       \ <recipient@example.com>\r\nSubject: Hello World\r\nContent-Type: multipart/alternative;\r\
-      \n boundary=\"b604e38c-12fb-11f1-b164-2bf370ae4941\"\r\n\r\n--b604e38c-12fb-11f1-b164-2bf370ae4941\r\
-      \nContent-Type: text/plain; charset=utf-8\r\n\r\n*Hello World*\r\n--b604e38c-12fb-11f1-b164-2bf370ae4941\r\
+      \n boundary=\"23f213ad-395e-11f1-8c7a-99705fedb418\"\r\n\r\n--23f213ad-395e-11f1-8c7a-99705fedb418\r\
+      \nContent-Type: text/plain; charset=utf-8\r\n\r\n*Hello World*\r\n--23f213ad-395e-11f1-8c7a-99705fedb418\r\
       \nContent-Type: text/html; charset=utf-8\r\n\r\n<strong>Hello World</strong>\r\
-      \n--b604e38c-12fb-11f1-b164-2bf370ae4941--\r\n"
+      \n--23f213ad-395e-11f1-8c7a-99705fedb418--\r\n"
     id: test.eml
   - data: |
       import $mail from "test.eml";
       import { expurgate } from "file://main.hsl";
+      import { AuthenticationResults } from "extras://authentication-results";
 
       // Test 1
       $expect = false;
@@ -25,6 +30,30 @@ scripting:
       if ($expect !== $result)
           throw Exception("Test 1: FAILED\nRESULT($result)\nEXPECT($expect)");
       echo "Test 1:\tOK";
+
+      // Test 2
+      $expect = false;
+      $dkims = [];
+      foreach ($mail->getHeaders("DKIM-Signature", ["field" => true]) as $i => $dkimsign)
+      {
+          if ($i >= 5) break;
+          $dkims[] = $mail->verifyDKIM($dkimsign);
+      }
+      $ar = AuthenticationResults(["hostname" => gethostname()])
+          ->DKIM($dkims)
+          ->toString(["multiline" => true]);
+      $expurgate = expurgate($mail->toFile(), [
+          "port" => 783,
+          "senderip" => "127.0.0.1",
+          "sender" => "sender@example.org",
+          "recipients" => [["recipient" => "recipient@example.com"]],
+          "id" => uuid(),
+          "authentication-results" => $ar
+        ]);
+      $result = $expurgate["spam"];
+      if ($expect !== $result)
+          throw Exception("Test 2: FAILED\nRESULT($result)\nEXPECT($expect)");
+      echo "Test 2:\tOK";
     id: test.hsl
 servers:
 - id: default

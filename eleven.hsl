@@ -10,6 +10,7 @@ function expurgate($fp, $opts = [])
 	$sender = $opts["sender"] ?? none;
 	$recipients = $opts["recipients"] ?? [];
 	$sizelimit = $opts["size_limit"] ?? 500 * 1024;
+	$ar = $opts["authentication-results"] ?? none;
 
 	$s = $fp->seek(0, "SEEK_END");
 	$fp->seek(0, "SEEK_SET");
@@ -30,6 +31,8 @@ function expurgate($fp, $opts = [])
 		$str .= "Sender: ".$sender."\r\n";
 	foreach ($recipients as $recipient)
 		$str .= "User: ".$recipient["recipient"]."\r\n";
+	if ($ar)
+		$str .= "Authentication-Results: ".base64_encode($ar)."\r\n";
 	$str .= "Content-length: $s\r\n";
 	$str .= "\r\n";
 	if (!$socket->send($str)) return ["error" => "Could not send request"];

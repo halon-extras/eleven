@@ -1,18 +1,25 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=example.org; s=myselector;
+	h=content-type:subject:to:from:date:message-id:mime-version:from;
+	bh=+HZoE3D12D+mvnGBXDiZ6hYbJ+3/RYOG2a3c++ZlspU=;
+	b=AMT8SikAtWLDOuN4ppaxTtdj+KlRQ7ElfkS7z9dQ43I/VoMKLIGOkWGI/1QvfIe0wDOKr6GZScP62
+	 1y6EtLf2skbOPAg5O03bw/P0IdGoF7FC03+StRQwd5ESPkbL3TlZyDI5h9Acm1aEBVgJe2qAzR+gzs
+	 lJ3SVK9QJ+yg7ofU=
 MIME-Version: 1.0
-Message-ID: <b604dde3-12fb-11f1-b164-2bf370ae4941@se1-gles-sth1.inumbo.com>
-Date: Thu, 26 Feb 2026 11:12:52 +0100
+Message-ID: <23f15f52-395e-11f1-8c7a-99705fedb418@se1-gles-flk1.inumbo.com>
+Date: Thu, 16 Apr 2026 08:33:11 +0200
 From: <sender@example.org>
 To: <recipient@example.com>
 Subject: Hello World
 Content-Type: multipart/alternative;
- boundary="b604e38c-12fb-11f1-b164-2bf370ae4941"
+ boundary="23f213ad-395e-11f1-8c7a-99705fedb418"
 
---b604e38c-12fb-11f1-b164-2bf370ae4941
+--23f213ad-395e-11f1-8c7a-99705fedb418
 Content-Type: text/plain; charset=utf-8
 
 *Hello World*
---b604e38c-12fb-11f1-b164-2bf370ae4941
+--23f213ad-395e-11f1-8c7a-99705fedb418
 Content-Type: text/html; charset=utf-8
 
 <strong>Hello World</strong>
---b604e38c-12fb-11f1-b164-2bf370ae4941--
+--23f213ad-395e-11f1-8c7a-99705fedb418--

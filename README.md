@@ -40,6 +40,7 @@ The following options are available in the **options** array.
 - recipients `array` - The envelope recipients in [this](https://docs.halon.io/hsl/eodonce.html#recipient) format.
 - size_limit `number` - Size limit in bytes. The default is `500 * 1024`.
 - timeout `number` - Timeout in seconds. The default is `30` seconds.
+- authentication-results `string` - The `Authentication-Results` header value
 
 **Returns**
 
@@ -57,12 +58,24 @@ If an error occures an `error` property (string) is set contaning the error mess
 
 ```
 import { expurgate } from "extras://eleven";
-$expurgate = expurgate($mail->toFile(), [
+import { AuthenticationResults } from "extras://authentication-results";
+
+$dkims = [];
+foreach ($arguments["mail"]->getHeaders("DKIM-Signature", ["field" => true]) as $i => $dkimsign)
+{
+    if ($i >= 5) break;
+    $dkims[] = $arguments["mail"]->verifyDKIM($dkimsign);
+}
+$ar = AuthenticationResults(["hostname" => gethostname()])
+    ->DKIM($dkims)
+    ->toString(["multiline" => true]);
+$expurgate = expurgate($arguments["mail"]->toFile(), [
     "port" => 783,
     "senderip" => $connection["remoteip"],
     "sender" => $transaction["sender"],
     "recipients" => $transaction["recipients"],
-    "id" => $transaction["id"]
+    "id" => $transaction["id"],
+    "authentication-results" => $ar
   ]);
 if ($expurgate["spam"])
 {

@@ -1,5 +1,6 @@
 import $mail from "test.eml";
 import { expurgate } from "file://main.hsl";
+import { AuthenticationResults } from "extras://authentication-results";
 
 // Test 1
 $expect = false;
@@ -14,3 +15,27 @@ $result = $expurgate["spam"];
 if ($expect !== $result)
     throw Exception("Test 1: FAILED\nRESULT($result)\nEXPECT($expect)");
 echo "Test 1:\tOK";
+
+// Test 2
+$expect = false;
+$dkims = [];
+foreach ($mail->getHeaders("DKIM-Signature", ["field" => true]) as $i => $dkimsign)
+{
+    if ($i >= 5) break;
+    $dkims[] = $mail->verifyDKIM($dkimsign);
+}
+$ar = AuthenticationResults(["hostname" => gethostname()])
+    ->DKIM($dkims)
+    ->toString(["multiline" => true]);
+$expurgate = expurgate($mail->toFile(), [
+    "port" => 783,
+    "senderip" => "127.0.0.1",
+    "sender" => "sender@example.org",
+    "recipients" => [["recipient" => "recipient@example.com"]],
+    "id" => uuid(),
+    "authentication-results" => $ar
+  ]);
+$result = $expurgate["spam"];
+if ($expect !== $result)
+    throw Exception("Test 2: FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 2:\tOK";
